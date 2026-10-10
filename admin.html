@@ -1,0 +1,988 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080b09">
+  <meta name="description" content="Administration MECHERGUI PHONE">
+  <title>MECHERGUI PHONE | Admin</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --green: #39ff14;
+      --bg: #080b09;
+      --panel: #111713;
+      --line: #29372c;
+      --muted: #a4afa6;
+      --white: #f5f7f5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--white);
+      font: 15px Arial, sans-serif;
+    }
+
+    header {
+      padding: 20px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #0b100c;
+    }
+
+    h1 { font-size: 21px; margin: 0; }
+    h1 span { color: var(--green); }
+
+    h2 { margin-top: 0; }
+
+    button {
+      padding: 11px 15px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--green);
+      color: #071006;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover { opacity: .85; }
+    button:disabled { opacity: .5; cursor: wait; }
+
+    button.secondary {
+      background: #253027;
+      color: white;
+    }
+
+    button.danger {
+      background: #69252a;
+      color: white;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0 12px;
+      background: #090e0b;
+      color: white;
+      border: 1px solid #354638;
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 1px solid var(--green);
+      border-color: var(--green);
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      accent-color: var(--green);
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #cbd5cd;
+    }
+
+    .container {
+      max-width: 1250px;
+      margin: 25px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      margin-bottom: 18px;
+    }
+
+    #login {
+      max-width: 430px;
+      margin: 65px auto;
+    }
+
+    #app { display: none; }
+
+    nav {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    nav button {
+      background: #202a22;
+      color: white;
+    }
+
+    nav button.active {
+      background: var(--green);
+      color: #071006;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      background: #0b100c;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .stat small { color: var(--muted); }
+
+    .stat strong {
+      display: block;
+      color: var(--green);
+      font-size: 25px;
+      margin-top: 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .section-head {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .tablewrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    td, th {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    th { color: var(--green); }
+
+    td button {
+      margin: 2px;
+      padding: 8px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .error {
+      color: #ff8585;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .success { color: var(--green); }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 8px;
+      background: #273529;
+      border-radius: 20px;
+    }
+
+    #productForm { display: none; }
+
+    .actions {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .status-message {
+      margin-top: 15px;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .row { grid-template-columns: 1fr; }
+      header { padding: 15px; }
+      .container { margin: 15px auto; }
+      .card { padding: 14px; }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1><span>MECHERGUI</span> PHONE <small>ADMIN</small></h1>
+  <button id="logout" class="secondary" hidden>Déconnexion</button>
+</header>
+
+<div class="container">
+
+  <!-- CONNEXION -->
+  <section id="login" class="card">
+    <h2>Connexion Admin</h2>
+    <p class="muted">Connectez-vous avec votre compte administrateur.</p>
+
+    <form id="loginForm">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" required autocomplete="username">
+
+      <label for="password">Mot de passe</label>
+      <input id="password" type="password" required autocomplete="current-password">
+
+      <button type="submit" id="loginButton">Se connecter</button>
+      <p id="loginError" class="error"></p>
+    </form>
+  </section>
+
+  <!-- APPLICATION ADMIN -->
+  <main id="app">
+
+    <nav>
+      <button class="active" data-page="dashboard">Dashboard</button>
+      <button data-page="products">Produits</button>
+      <button data-page="orders">Commandes</button>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="page active">
+      <h2>Dashboard</h2>
+
+      <div class="stats">
+        <div class="stat">
+          <small>Produits actifs</small>
+          <strong id="sProducts">0</strong>
+        </div>
+
+        <div class="stat">
+          <small>Commandes</small>
+          <strong id="sOrders">0</strong>
+        </div>
+
+        <div class="stat">
+          <small>En attente</small>
+          <strong id="sPending">0</strong>
+        </div>
+
+        <div class="stat">
+          <small>Total livré (TND)</small>
+          <strong id="sRevenue">0</strong>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Commandes récentes</h3>
+        <div id="recent" class="muted">Chargement...</div>
+      </div>
+    </section>
+
+    <!-- PRODUITS -->
+    <section id="products" class="page">
+      <div class="section-head">
+        <h2>Gestion des produits</h2>
+        <button id="addProduct">+ Ajouter un produit</button>
+      </div>
+
+      <form id="productForm" class="card">
+        <h3 id="formTitle">Nouveau produit</h3>
+
+        <input id="pid" type="hidden">
+
+        <label for="pname">Nom du produit *</label>
+        <input id="pname" required maxlength="150">
+
+        <div class="row">
+          <div>
+            <label for="pcat">Catégorie *</label>
+
+            <!-- Les valeurs correspondent exactement au CHECK Supabase -->
+            <select id="pcat" required>
+              <option value="telephones">Téléphones</option>
+              <option value="accessoires">Accessoires</option>
+              <option value="protection">Protection</option>
+              <option value="gaming">Gaming</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="pprice">Prix en TND *</label>
+            <input id="pprice" type="number" min="0" step="0.01" required>
+          </div>
+        </div>
+
+        <label for="pdesc">Description</label>
+        <textarea id="pdesc" rows="3"></textarea>
+
+        <label for="pimage">URL de la photo</label>
+        <input id="pimage" type="url" placeholder="https://...">
+
+        <label for="ptag">Badge / promotion</label>
+        <input id="ptag" placeholder="Nouveau, Promo...">
+
+        <label>
+          <input id="pactive" type="checkbox" checked>
+          Produit visible sur le site
+        </label>
+
+        <p id="productError" class="error"></p>
+
+        <button id="saveProduct" type="submit">Enregistrer</button>
+        <button id="cancelProduct" type="button" class="secondary">Annuler</button>
+      </form>
+
+      <input id="searchProducts" placeholder="Rechercher un produit...">
+      <div id="productsTable" class="card">Chargement...</div>
+    </section>
+
+    <!-- COMMANDES -->
+    <section id="orders" class="page">
+      <h2>Gestion des commandes</h2>
+      <input id="searchOrders" placeholder="Rechercher par nom ou téléphone...">
+      <div id="ordersTable" class="card">Chargement...</div>
+    </section>
+
+    <p id="message" class="status-message"></p>
+  </main>
+</div>
+
+<script>
+  // CONFIGURATION SUPABASE
+  const SUPABASE_URL = "https://zldqarqdmnbiryihfhzq.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_k1JuOYFoZnIkqlle50GJCA_UOfoOmpq";
+
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let products = [];
+  let orders = [];
+
+  const $ = id => document.getElementById(id);
+
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+
+  const money = value => Number(value || 0).toLocaleString("fr-TN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  function say(text, success = false) {
+    $("message").className = success
+      ? "status-message success"
+      : "status-message error";
+
+    $("message").textContent = text || "";
+  }
+
+  // AUTHENTIFICATION ET VERIFICATION ADMIN
+  async function startApp(user) {
+    $("loginError").textContent = "Vérification des droits...";
+
+    const { data: admin, error } = await db
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error || !admin) {
+      await db.auth.signOut();
+
+      $("loginError").textContent = error
+        ? "Erreur de vérification admin : " + error.message
+        : "Accès refusé : votre UID doit être enregistré dans public.admin_users.";
+
+      return;
+    }
+
+    $("login").style.display = "none";
+    $("app").style.display = "block";
+    $("logout").hidden = false;
+
+    await refreshAll();
+  }
+
+  $("loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const button = $("loginButton");
+    button.disabled = true;
+    $("loginError").textContent = "Connexion...";
+
+    try {
+      const { data, error } = await db.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+
+      if (error) throw error;
+
+      await startApp(data.user);
+    } catch (error) {
+      $("loginError").textContent = "Erreur : " + error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $("logout").addEventListener("click", async () => {
+    await db.auth.signOut();
+    location.reload();
+  });
+
+  db.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      $("loginError").textContent = error.message;
+      return;
+    }
+
+    if (data.session) {
+      startApp(data.session.user);
+    }
+  });
+
+  // NAVIGATION
+  document.querySelectorAll("[data-page]").forEach(button => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("[data-page]").forEach(item => {
+        item.classList.toggle("active", item === button);
+      });
+
+      document.querySelectorAll(".page").forEach(page => {
+        page.classList.toggle("active", page.id === button.dataset.page);
+      });
+
+      say("");
+    });
+  });
+
+  async function refreshAll() {
+    say("");
+    await Promise.all([loadProducts(), loadOrders()]);
+    stats();
+  }
+
+  // CHARGEMENT DES PRODUITS
+  async function loadProducts() {
+    const { data, error } = await db
+      .from("products")
+      .select("id,name,category,price,description,image_url,tag,active,created_at")
+      .order("id", { ascending: false });
+
+    if (error) {
+      $("productsTable").textContent = "Erreur produits : " + error.message;
+      say(error.message);
+      return;
+    }
+
+    products = data || [];
+    renderProducts();
+    stats();
+  }
+
+  // AFFICHAGE DES PRODUITS
+  function renderProducts() {
+    const query = ($("searchProducts").value || "").toLowerCase();
+
+    const list = products.filter(product =>
+      `${product.name} ${product.category} ${product.description || ""}`
+        .toLowerCase()
+        .includes(query)
+    );
+
+    if (!list.length) {
+      $("productsTable").innerHTML = "<p>Aucun produit trouvé.</p>";
+      stats();
+      return;
+    }
+
+    $("productsTable").innerHTML = `
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Catégorie</th>
+              <th>Prix</th>
+              <th>État</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(product => `
+              <tr>
+                <td>
+                  ${esc(product.name)}<br>
+                  <small class="muted">${esc(product.tag || "")}</small>
+                </td>
+                <td>${esc(product.category)}</td>
+                <td>${money(product.price)} TND</td>
+                <td>
+                  <span class="badge">
+                    ${product.active ? "Visible" : "Masqué"}
+                  </span>
+                </td>
+                <td>
+                  <div class="actions">
+                    <button class="secondary" data-edit="${esc(product.id)}">
+                      Modifier
+                    </button>
+                    <button class="secondary" data-toggle="${esc(product.id)}">
+                      ${product.active ? "Masquer" : "Afficher"}
+                    </button>
+                    <button class="danger" data-delete="${esc(product.id)}">
+                      Supprimer
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    $("productsTable").querySelectorAll("[data-edit]").forEach(button => {
+      button.onclick = () => editProduct(button.dataset.edit);
+    });
+
+    $("productsTable").querySelectorAll("[data-toggle]").forEach(button => {
+      button.onclick = () => toggleProduct(button.dataset.toggle);
+    });
+
+    $("productsTable").querySelectorAll("[data-delete]").forEach(button => {
+      button.onclick = () => deleteProduct(button.dataset.delete);
+    });
+
+    stats();
+  }
+
+  $("searchProducts").addEventListener("input", renderProducts);
+  $("addProduct").addEventListener("click", () => openForm());
+
+  $("cancelProduct").addEventListener("click", () => {
+    $("productForm").style.display = "none";
+    $("productError").textContent = "";
+  });
+
+  // FORMULAIRE PRODUIT
+  function openForm(product = null) {
+    $("productForm").reset();
+
+    $("pid").value = product?.id ?? "";
+    $("pname").value = product?.name || "";
+
+    // Valeurs strictement compatibles avec products_category_check
+    const allowedCategories = [
+      "telephones",
+      "accessoires",
+      "protection",
+      "gaming"
+    ];
+
+    const category = product?.category || "telephones";
+
+    $("pcat").value = allowedCategories.includes(category)
+      ? category
+      : "telephones";
+
+    $("pprice").value = product?.price ?? "";
+    $("pdesc").value = product?.description || "";
+    $("pimage").value = product?.image_url || "";
+    $("ptag").value = product?.tag || "";
+    $("pactive").checked = product?.active ?? true;
+
+    $("formTitle").textContent = product
+      ? "Modifier le produit"
+      : "Nouveau produit";
+
+    $("productError").textContent = "";
+    $("productForm").style.display = "block";
+    $("productForm").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function editProduct(id) {
+    const product = products.find(item => String(item.id) === String(id));
+
+    if (product) openForm(product);
+  }
+
+  // AJOUT ET MODIFICATION
+  $("productForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const button = $("saveProduct");
+    button.disabled = true;
+    button.textContent = "Enregistrement...";
+    $("productError").textContent = "";
+
+    const category = $("pcat").value;
+
+    const allowedCategories = [
+      "telephones",
+      "accessoires",
+      "protection",
+      "gaming"
+    ];
+
+    if (!allowedCategories.includes(category)) {
+      $("productError").textContent = "Catégorie non autorisée.";
+      button.disabled = false;
+      button.textContent = "Enregistrer";
+      return;
+    }
+
+    const price = Number($("pprice").value);
+
+    if (!Number.isFinite(price) || price < 0) {
+      $("productError").textContent = "Veuillez entrer un prix valide.";
+      button.disabled = false;
+      button.textContent = "Enregistrer";
+      return;
+    }
+
+    const payload = {
+      name: $("pname").value.trim(),
+      category: category,
+      price: price,
+      description: $("pdesc").value.trim() || null,
+      image_url: $("pimage").value.trim() || null,
+      tag: $("ptag").value.trim() || null,
+      active: $("pactive").checked
+    };
+
+    try {
+      const id = $("pid").value;
+
+      const result = id
+        ? await db.from("products").update(payload).eq("id", id)
+        : await db.from("products").insert(payload);
+
+      if (result.error) throw result.error;
+
+      $("productForm").style.display = "none";
+
+      await loadProducts();
+      say("Produit enregistré avec succès.", true);
+    } catch (error) {
+      $("productError").textContent =
+        "Erreur d'enregistrement : " + error.message;
+    } finally {
+      button.disabled = false;
+      button.textContent = "Enregistrer";
+    }
+  });
+
+  // AFFICHER / MASQUER UN PRODUIT
+  async function toggleProduct(id) {
+    const product = products.find(item => String(item.id) === String(id));
+    if (!product) return;
+
+    if (!confirm((product.active ? "Masquer" : "Afficher") + " ce produit ?")) {
+      return;
+    }
+
+    const { error } = await db
+      .from("products")
+      .update({ active: !product.active })
+      .eq("id", id);
+
+    if (error) {
+      say("Erreur : " + error.message);
+      return;
+    }
+
+    await loadProducts();
+    say("Visibilité mise à jour.", true);
+  }
+
+  // SUPPRIMER UN PRODUIT
+  async function deleteProduct(id) {
+    const product = products.find(item => String(item.id) === String(id));
+    if (!product) return;
+
+    if (!confirm("Supprimer définitivement " + product.name + " ?")) {
+      return;
+    }
+
+    const { error } = await db
+      .from("products")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      say("Erreur de suppression : " + error.message);
+      return;
+    }
+
+    await loadProducts();
+    say("Produit supprimé.", true);
+  }
+
+  // CHARGEMENT DES COMMANDES
+  async function loadOrders() {
+    const { data, error } = await db
+      .from("orders")
+      .select("id,customer_name,customer_phone,customer_address,items,total,status,created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      orders = [];
+      $("ordersTable").textContent = "Erreur commandes : " + error.message;
+      $("recent").textContent = "Impossible de charger les commandes.";
+      say("Commandes : " + error.message);
+      stats();
+      return;
+    }
+
+    orders = data || [];
+    renderOrders();
+    renderRecent();
+    stats();
+  }
+
+  function dateText(value) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime())
+      ? esc(value)
+      : date.toLocaleString("fr-TN");
+  }
+
+  function itemsText(items) {
+    if (typeof items === "string") {
+      try {
+        items = JSON.parse(items);
+      } catch {
+        return esc(items);
+      }
+    }
+
+    if (!Array.isArray(items)) {
+      return esc(JSON.stringify(items ?? "—"));
+    }
+
+    return items.map(item => {
+      const name = item.name || item.title || "Produit";
+      const quantity = item.quantity ?? item.qty ?? 1;
+
+      return `${esc(name)} × ${esc(quantity)}`;
+    }).join("<br>");
+  }
+
+  // AFFICHAGE DES COMMANDES
+  function renderOrders() {
+    const query = ($("searchOrders").value || "").toLowerCase();
+
+    const list = orders.filter(order =>
+      `${order.id} ${order.customer_name || ""} ${order.customer_phone || ""}`
+        .toLowerCase()
+        .includes(query)
+    );
+
+    if (!list.length) {
+      $("ordersTable").innerHTML = "<p>Aucune commande trouvée.</p>";
+      return;
+    }
+
+    const statuses = ["En attente", "Confirmée", "Livrée", "Annulée"];
+
+    $("ordersTable").innerHTML = `
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Commande</th>
+              <th>Client</th>
+              <th>Articles</th>
+              <th>Total</th>
+              <th>Statut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(order => `
+              <tr>
+                <td>
+                  #${esc(order.id)}<br>
+                  <small class="muted">${dateText(order.created_at)}</small>
+                </td>
+                <td>
+                  ${esc(order.customer_name || "—")}<br>
+                  ${esc(order.customer_phone || "—")}<br>
+                  <small class="muted">${esc(order.customer_address || "")}</small>
+                </td>
+                <td>${itemsText(order.items)}</td>
+                <td>${money(order.total)} TND</td>
+                <td>
+                  <select data-status="${esc(order.id)}">
+                    ${statuses.map(status => `
+                      <option value="${esc(status)}"
+                        ${status === (order.status || "En attente") ? "selected" : ""}>
+                        ${esc(status)}
+                      </option>
+                    `).join("")}
+                  </select>
+                </td>
+                <td>
+                  <button data-save-status="${esc(order.id)}">Enregistrer</button>
+                  <button class="secondary" data-whatsapp="${esc(order.id)}">
+                    WhatsApp
+                  </button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    $("ordersTable").querySelectorAll("[data-save-status]").forEach(button => {
+      button.onclick = () => updateStatus(button.dataset.saveStatus);
+    });
+
+    $("ordersTable").querySelectorAll("[data-whatsapp]").forEach(button => {
+      button.onclick = () => contactCustomer(button.dataset.whatsapp);
+    });
+  }
+
+  $("searchOrders").addEventListener("input", renderOrders);
+
+  async function updateStatus(id) {
+    const select = [...document.querySelectorAll("[data-status]")]
+      .find(element => String(element.dataset.status) === String(id));
+
+    if (!select) return;
+
+    const { error } = await db
+      .from("orders")
+      .update({ status: select.value })
+      .eq("id", id);
+
+    if (error) {
+      say("Impossible de modifier le statut : " + error.message);
+      return;
+    }
+
+    await loadOrders();
+    say("Statut mis à jour.", true);
+  }
+
+  // CONTACT WHATSAPP CLIENT
+  function contactCustomer(id) {
+    const order = orders.find(item => String(item.id) === String(id));
+    if (!order) return;
+
+    let phone = String(order.customer_phone || "").replace(/\D/g, "");
+
+    if (phone.startsWith("00")) {
+      phone = phone.slice(2);
+    } else if (phone.startsWith("0")) {
+      phone = "216" + phone.slice(1);
+    } else if (phone.length === 8) {
+      phone = "216" + phone;
+    }
+
+    if (!phone) {
+      say("Numéro de téléphone manquant.");
+      return;
+    }
+
+    const text = encodeURIComponent(
+      `Bonjour ${order.customer_name || ""}, concernant votre commande chez MECHERGUI PHONE.`
+    );
+
+    window.open(
+      `https://wa.me/${phone}?text=${text}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
+  // COMMANDES RECENTES
+  function renderRecent() {
+    if (!orders.length) {
+      $("recent").textContent = "Aucune commande pour le moment.";
+      return;
+    }
+
+    $("recent").innerHTML = `
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Référence</th>
+              <th>Client</th>
+              <th>Total</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${orders.slice(0, 5).map(order => `
+              <tr>
+                <td>#${esc(order.id)}</td>
+                <td>${esc(order.customer_name || "—")}</td>
+                <td>${money(order.total)} TND</td>
+                <td>${esc(order.status || "En attente")}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // STATISTIQUES
+  function stats() {
+    $("sProducts").textContent =
+      products.filter(product => product.active).length;
+
+    $("sOrders").textContent = orders.length;
+
+    $("sPending").textContent =
+      orders.filter(order => !order.status || order.status === "En attente").length;
+
+    const revenue = orders
+      .filter(order => order.status === "Livrée")
+      .reduce((sum, order) => sum + Number(order.total || 0), 0);
+
+    $("sRevenue").textContent = money(revenue);
+  }
+</script>
+
+</body>
+</html>
